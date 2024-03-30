@@ -75,7 +75,7 @@ class TSFE_Model(nn.Module):
                                   pe=pe, learn_pe=learn_pe, fc_dropout=fc_dropout, head_dropout=head_dropout, padding_patch = padding_patch,
                                   pretrain_head=pretrain_head, head_type=head_type, individual=individual, revin=revin, affine=affine,
                                   subtract_last=subtract_last, verbose=verbose, **kwargs)
-        self.fc = nn.Linear(target_window, configs.labels)
+        # self.fc = nn.Linear(target_window, configs.labels)
     
     def forward(self, x):           # x: [Batch, Input length, Channel]
         if self.decomposition:
