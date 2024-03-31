@@ -3,11 +3,10 @@
 
 ## Requirements
 python >= 3.8
+Pytorch >= 1.11
+Numpy
+Pandas
 
-For an express instillation, we include .yaml files.
-   ```shell
-   pip install requirements.yaml
-   ```
 ## Datasets
 Download data.
 You can download all the datasets from [Autoformer](https://drive.google.com/drive/folders/1ZOYpTUa82_jCcxIdTmyr0LXQfvaM9vIy)
