@@ -18,7 +18,7 @@ sh ./scipts_distill/weather.sh
 ```
 
 ## Additional Experiments
-Additional experimental results can be see at [Additional_experiment.md](./Additional_experiment.md)
+Additional experimental results can be seen at [Additional_experiment.md](./Additional_experiment.md)
 
 ## Requirements
 ```
