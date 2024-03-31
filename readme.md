@@ -1,14 +1,5 @@
 # Less is More: Efficient Time Series Dataset Condensation via Two-fold Modal Matching
 
-
-## Requirements
-```
-python >= 3.8
-Pytorch >= 1.11
-Numpy
-Pandas
-```
-
 ## Data Preparation
 TimeDC is implemented on several public time series datasets.
 
@@ -28,3 +19,11 @@ sh ./scipts_distill/weather.sh
 
 ## Additional Experiments
 Additional experimental results can be see at [Additional_experiment.md](./Additional_experiment.md)
+
+## Requirements
+```
+python >= 3.8
+Pytorch >= 1.11
+Numpy
+Pandas
+```
