@@ -21,7 +21,7 @@ sh ./scripts_buffer/weather.sh
 ```
 
 ## Time Series Dataset Condensation with TimeDC
-After obtaining expert trajectories, run each script in to perform time series dataset condensation, for example
+After obtaining expert trajectories, run each script in ```./scripts_distill/``` to perform time series dataset condensation, for example
 ```
 sh ./scipts_distill/weather.sh
 ```
