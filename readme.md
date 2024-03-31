@@ -26,4 +26,5 @@ After obtaining expert trajectories, run each script in ```./scripts_distill/```
 sh ./scipts_distill/weather.sh
 ```
 
+## Additional Experiments
 Additional experimental results can be see at [Additional_experiment.md](./Additional_experiment.md)
