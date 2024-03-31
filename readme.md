@@ -2,13 +2,12 @@
 
 
 ## Requirements
+```
 python >= 3.8
-
 Pytorch >= 1.11
-
 Numpy
-
 Pandas
+```
 
 ## Datasets
 Download data.
