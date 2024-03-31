@@ -10,8 +10,9 @@ Pandas
 ```
 
 ## Datasets
-Download data.
-You can download all the datasets from [Autoformer](https://drive.google.com/drive/folders/1ZOYpTUa82_jCcxIdTmyr0LXQfvaM9vIy)
+TimeDC is implemented on several public time series datasets.
+
+- **Weather**, **Traffic**, **Electricity** and **ETT** from [Autoformer](https://drive.google.com/drive/folders/1ZOYpTUa82_jCcxIdTmyr0LXQfvaM9vIy)
 
 ## Generating Expert Trajectories
 All the scripts are in the directory ```./scripts_buffer/```
