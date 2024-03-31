@@ -15,15 +15,13 @@ TimeDC is implemented on several public time series datasets.
 - **Weather**, **Traffic**, **Electricity** and **ETT** from [Autoformer](https://drive.google.com/drive/folders/1ZOYpTUa82_jCcxIdTmyr0LXQfvaM9vIy)
 
 ## Generating Expert Trajectories
-All the scripts are in the directory ```./scripts_buffer/```
-The following command will train different dataset for 50 epochs each:
+Run each script in ```./scripts_buffer/``` to generate expert trajectories, for example
 ```
 sh ./scripts_buffer/weather.sh
 ```
-We used 50 epochs with the default learning rate for all of our experts.
 
 ## Time Series Dataset Condensation with TimeDC
-The following command will then use the buffers we just generated to distill every dataset:
+After obtaining expert trajectories, run each script in to perform time series dataset condensation, for example
 ```
 sh ./scipts_distill/weather.sh
 ```
