@@ -9,7 +9,7 @@ Numpy
 Pandas
 ```
 
-## Datasets
+## Data Preparation
 TimeDC is implemented on several public time series datasets.
 
 - **Weather**, **Traffic**, **Electricity** and **ETT** from [Autoformer](https://drive.google.com/drive/folders/1ZOYpTUa82_jCcxIdTmyr0LXQfvaM9vIy)
