@@ -6,15 +6,15 @@
 
 - **Generating Expert Trajectories:**
   - Run each script in ```./scripts_buffer/``` to generate expert trajectories, for example
-  ```
-  sh ./scripts_buffer/weather.sh
-  ```
+    ```
+    sh ./scripts_buffer/weather.sh
+    ```
 
 - **Time Series Dataset Condensation with TimeDC**
   - After obtaining expert trajectories, run each script in ```./scripts_distill/``` to perform time series dataset condensation, for example
-  ```
-  sh ./scipts_distill/weather.sh
-  ```
+    ```
+    sh ./scipts_distill/weather.sh
+    ```
 
 ## Additional Experiments
 
