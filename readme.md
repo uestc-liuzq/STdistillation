@@ -19,6 +19,8 @@ sh ./scipts_distill/weather.sh
 
 ## Additional Experiments
 
+### Effect of the Number of Expert Trajectories
+
 ### Precisions on Time Series Classification
 We also record the overall precision results on the task of time series classification. The results are as follows. TimeDC achieves the best performance among all the baselines. 
 
