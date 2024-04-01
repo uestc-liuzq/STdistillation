@@ -39,4 +39,6 @@ We present the time of coreset construction and training time of coreset methods
 ```
 python >= 3.8
 Pytorch >= 1.11
+numpy >=1.21.2
+torchvision >=0.12
 ```
