@@ -2,9 +2,6 @@
 
 ## Running
 - **Data Preparation:**
-
-  - TimeDC is implemented on several public time series datasets.
-
   - **Weather**, **Traffic**, **Electricity** and **ETT** can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1ZOYpTUa82_jCcxIdTmyr0LXQfvaM9vIy).
 
 - **Generating Expert Trajectories:**
