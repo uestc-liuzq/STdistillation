@@ -26,7 +26,8 @@
 ### Precisions on Time Series Classification
 We also record the overall precision results on the task of time series classification. The results are as follows. TimeDC achieves the best performance among all the baselines. 
 
-![](precision.png)
+<img src="precision.png" width="50%" height="50%">
+
 
 ### Time Comparison Among Coreset Methods and TimeDC
 We present the time of coreset construction and training time of coreset methods and TimeDC as follows, which shows the training time of TimeDC is comparable with those of coreset methods.
