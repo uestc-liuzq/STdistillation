@@ -24,7 +24,7 @@ We also record the overall precision results on the task of time series classifi
 
 ![](precision.png)
 
-### Time of Coreset methods and TimeDC
+### Time Comparison Among Coreset methods and TimeDC
 We present the time of coreset constrcution and training time of coreset methods and TimeDC as follows, which shows the training time of TimeDC is comparable with those of coreset methods.
 
 |            Dataset            | Weather |         |         |        |  ETTh1 |         |         |        |
