@@ -19,19 +19,13 @@
 ## Additional Experiments
 
 ### Effect of Expert Trajectory Numbers
-| Trajectory Number (PL=96)     | MAE     | RMSE    |
-|:-----------------------------:|:-------:|:-------:|
-|        1                      |  0.341  | 0.303   |
-|        3                      |  0.324  | 0.286   |
-|        5                      |  0.306  | 0.275   |
-|        10                     |  0.257  | 0.188   |
+| Trajectory Number (PL=96)     | MAE     | RMSE    | Trajectory Number (PL=192)     | MAE     | RMSE   |
+|:-----------------------------:|:-------:|:-------:|:-----------------------------:|:-------:|:-------:|
+|        1                      |  0.341  | 0.303   |        1                      |  0.349  | 0.311   |
+|        3                      |  0.324  | 0.286   |        3                      |  0.332  | 0.296   |
+|        5                      |  0.306  | 0.275   |        5                      |  0.325  | 0.279   |
+|        10                     |  0.257  | 0.188   |        10                     |  0.285  | 0.247   |
 
-| Trajectory Number (PL=192)     | MAE     | RMSE    |
-|:-----------------------------:|:-------:|:-------:|
-|        1                      |  0.349  | 0.311   |
-|        3                      |  0.332  | 0.296   |
-|        5                      |  0.325  | 0.279   |
-|        10                     |  0.285  | 0.247   |
 
 ### Precisions on Time Series Classification
 We also record the overall precision results on the task of time series classification. The results are as follows. TimeDC achieves the best performance among all the baselines. 
