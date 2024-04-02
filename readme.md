@@ -24,13 +24,6 @@ We study the effect of the number of expert trajectories on _Weather_ as shown i
 |        5                      |  0.306  | 0.275   |        5                      |  0.325  | 0.279   |
 |        10                     |  0.257  | 0.188   |        10                     |  0.285  | 0.247   |
 
-
-### Precisions on Time Series Classification
-We also record the overall precision results on the task of time series classification. The results are as follows. TimeDC achieves the best performance among all the baselines. 
-
-<img src="precision.png" width="50%" height="50%">
-
-
 ### Time Comparison Among Coreset Methods and TimeDC
 We present the time of coreset construction and training time of coreset methods and TimeDC as follows, which shows the training time of TimeDC is comparable with those of coreset methods.
 
@@ -39,6 +32,11 @@ We present the time of coreset construction and training time of coreset methods
 |        Method (PL = 96)       |  Random | K-means | Herding | TimeDC | Random | K-means | Herding | TimeDC |
 | Coreset Construction Time (s) |   1.85  |  10.14  |  63.66  |  None  |  2.00  |   6.07  |  69.01  |  None  |
 |       Training Time (s)       |  20.37  |  20.40  |  20.38  |  20.41 |  9.54  |   9.56  |   9.55  |  9.56  |
+
+### Precisions on Time Series Classification
+We also record the overall precision results on the task of time series classification. The results are as follows. TimeDC achieves the best performance among all the baselines. 
+
+<img src="precision.png" width="50%" height="50%">
 
 ## Requirements
 ```
