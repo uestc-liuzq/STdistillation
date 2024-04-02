@@ -1,7 +1,7 @@
 # Less is More: Efficient Time Series Dataset Condensation via Two-fold Modal Matching
 
 ## Running
-- **Data Preparation:** **Weather**, **Traffic**, **Electricity** and **ETT** can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1ZOYpTUa82_jCcxIdTmyr0LXQfvaM9vIy).
+- **Data Preparation:** _Weather_, _Traffic_, _Electricity_ and _ETT_ can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1ZOYpTUa82_jCcxIdTmyr0LXQfvaM9vIy).
 
 - **Generating Expert Trajectories:** Run each script in ```./scripts_buffer/``` to generate expert trajectories, for example
     ```
