@@ -1,9 +1,21 @@
-## Precisions on Time Series Classification
+### Effect of Expert Trajectory Numbers
+We study the effect of the number of expert trajectories on _Weather_ as shown in the following Table. From the Table, we can easily observe that as the increase of the Trajectories number, the performance of TimeDC gets better. This is because more expert trajectories may bring more knowledge, which gives more guidance on time series dataset condensation.
+| Trajectory Number (PL=96)     | MAE     | RMSE    | Trajectory Number (PL=192)     | MAE     | RMSE   |
+|:-----------------------------:|:-------:|:-------:|:-----------------------------:|:-------:|:-------:|
+|        1                      |  0.341  | 0.303   |        1                      |  0.349  | 0.311   |
+|        3                      |  0.324  | 0.286   |        3                      |  0.332  | 0.296   |
+|        5                      |  0.306  | 0.275   |        5                      |  0.325  | 0.279   |
+|        10                     |  0.257  | 0.188   |        10                     |  0.285  | 0.247   |
+
+
+### Precisions on Time Series Classification
 We also record the overall precision results on the task of time series classification. The results are as follows. TimeDC achieves the best performance among all the baselines. 
 
-![](img/precision.png)
-## Time of Coreset methods and TimeDC
-We present the time of coreset constrcution and training time of coreset methods and TimeDC as follows, which shows the training time of TimeDC is comparable with those of coreset methods.
+<img src="precision.png" width="50%" height="50%">
+
+
+### Time Comparison Among Coreset Methods and TimeDC
+We present the time of coreset construction and training time of coreset methods and TimeDC as follows, which shows the training time of TimeDC is comparable with those of coreset methods.
 
 |            Dataset            | Weather |         |         |        |  ETTh1 |         |         |        |
 |:-----------------------------:|:-------:|:-------:|:-------:|:------:|:------:|:-------:|:-------:|:------:|
