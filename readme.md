@@ -8,7 +8,7 @@
     sh ./scripts_buffer/weather.sh
     ```
 
-- **Time Series Dataset Condensation with TimeDC** After obtaining expert trajectories, run each script in ```./scripts_distill/``` to perform time series dataset condensation, for example
+- **Time Series Dataset Condensation with TimeDC:** After obtaining expert trajectories, run each script in ```./scripts_distill/``` to perform time series dataset condensation, for example
     ```
     sh ./scipts_distill/weather.sh
     ```
@@ -16,7 +16,7 @@
 ## Additional Experiments
 
 ### Effect of Expert Trajectory Numbers
-We study the effect of the number of expert trajectories on **Weather** as shown in the following Table. From the Table, we can easily observe that as the increase of the Trajectories number, the performance of TimeDC gets better. This is because more expert trajectories may bring more knowledge, which gives more guidance on time series dataset condensation.
+We study the effect of the number of expert trajectories on _Weather_ as shown in the following Table. From the Table, we can easily observe that as the increase of the Trajectories number, the performance of TimeDC gets better. This is because more expert trajectories may bring more knowledge, which gives more guidance on time series dataset condensation.
 | Trajectory Number (PL=96)     | MAE     | RMSE    | Trajectory Number (PL=192)     | MAE     | RMSE   |
 |:-----------------------------:|:-------:|:-------:|:-----------------------------:|:-------:|:-------:|
 |        1                      |  0.341  | 0.303   |        1                      |  0.349  | 0.311   |
