@@ -1,6 +1,6 @@
 # Less is More: Efficient Time Series Dataset Condensation via Two-fold Modal Matching
 
-<img src="framework.png" width="50%" height="50%">
+<img src="framework.png" width="90%" height="80%">
 
 ## Running
 - **Data Preparation:** _Weather_, _Traffic_, _Electricity_ and _ETT_ can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1ZOYpTUa82_jCcxIdTmyr0LXQfvaM9vIy).
