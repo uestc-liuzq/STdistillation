@@ -13,6 +13,7 @@
     sh ./scipts_distill/weather.sh
     ```
 
+<!--
 ## Additional Experiments
 
 ### Effect of Expert Trajectory Numbers
@@ -40,6 +41,7 @@ Please see the figures in the folder **./figures/** regarding effect of the size
 We also record the overall precision results on the task of time series classification. The results are as follows. TimeDC achieves the best performance among all the baselines. 
 
 <img src="precision.png" width="50%" height="50%">
+-->
 
 ## Requirements
 ```
