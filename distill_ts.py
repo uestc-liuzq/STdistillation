@@ -56,10 +56,10 @@ def main(args):
     train_data, train_loader = get_data(args, flag='train')
     print(len(train_loader))
     test_data, test_loader = get_data(args, flag='test')
-    N=500
+    N = 500
     x = []
     y = []
-    for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in tqdm(enumerate(train_loader)):
+    for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
         x.append(batch_x)
         y.append(batch_y)
     x = torch.cat(x,dim=0)
@@ -70,6 +70,7 @@ def main(args):
     index_y = torch.LongTensor(random.sample(range(y.size(0)), N))
     y_sys = torch.index_select(y, 0, index_y)
     y_sys = add_noise(y_sys, 0.001)
+    del x,y,index_x,index_y
     syn_lr = torch.tensor(args.lr_teacher).to(args.device)
     ''' training '''
     syn_lr = syn_lr.detach().to(args.device).requires_grad_(True)
@@ -267,9 +268,6 @@ def main(args):
         for _ in student_params:
             del _
 
-        if it%10 == 0:
-            print('%s iter = %04d, loss = %.4f' % (get_time(), it, grand_loss.item()))
-
     wandb.finish()
 
 
@@ -286,9 +284,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--lr_init', type=float, default=0.0001, help='how to init lr (alpha)')
 
-    parser.add_argument('--batch_real', type=int, default=256, help='batch size for real ECG200')
+    parser.add_argument('--batch_real', type=int, default=128, help='batch size for real ECG200')
     parser.add_argument('--batch_syn', type=int, default=int, help='should only use this if you run out of VRAM')
-    parser.add_argument('--batch_train', type=int, default=256, help='batch size for training networks')
+    parser.add_argument('--batch_train', type=int, default=128, help='batch size for training networks')
 
     parser.add_argument('--buffer_path', type=str, default='./buffers', help='buffer path')
 
@@ -305,7 +303,7 @@ if __name__ == '__main__':
     parser.add_argument('--canvas_samples', type=int, default=1, help='number of canvas samples per iteration')
 
 
-    parser.add_argument('--max_files', type=int, default=2, help='number of expert files to read (leave as None unless doing ablations)')
+    parser.add_argument('--max_files', type=int, default=5, help='number of expert files to read (leave as None unless doing ablations)')
     parser.add_argument('--max_experts', type=int, default=None, help='number of experts to read per file (leave as None unless doing ablations)')
 
     parser.add_argument('--force_save', action='store_true', help='this will save images for 50ipc')
@@ -333,7 +331,7 @@ if __name__ == '__main__':
     # forecasting task
     parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
     parser.add_argument('--label_len', type=int, default=48, help='start token length')
-    parser.add_argument('--pred_len', type=int, default=96, help='prediction sequence length')
+    parser.add_argument('--pred_len', type=int, default=336, help='prediction sequence length')
 
     # DLinear
     # parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
@@ -362,7 +360,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
     parser.add_argument('--e_layers', type=int, default=2, help='num of encoder layers')
     parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
-    parser.add_argument('--d_ff', type=int, default=2048, help='dimension of fcn')
+    parser.add_argument('--d_ff', type=int, default=256, help='dimension of fcn')
     parser.add_argument('--moving_avg', type=int, default=25, help='window size of moving average')
     parser.add_argument('--factor', type=int, default=1, help='attn factor')
     parser.add_argument('--distil', action='store_false',
