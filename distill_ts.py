@@ -123,7 +123,7 @@ def main(args):
     best_std_mse = {m: 0 for m in model_eval_pool}
 
     for it in range(0, args.Iteration+1):
-
+        save_npy = False
         # writer.add_scalar('Progress', it, it)
         wandb.log({"Progress": it}, step=it)
         ''' Evaluate synthetic '''
@@ -148,11 +148,12 @@ def main(args):
                 mae_test_std = np.std(MAE)
                 mse_test_mean = np.mean(MSE)
                 mse_test_std = np.std(MSE)
-                if mae_test_mean < best_mean_mae[model_eval] and mse_test_mean < best_mean_mse[model_eval]:
+                if mae_test_mean < best_mean_mae[model_eval]:
                     best_mean_mae[model_eval] = mae_test_mean
                     best_std_mae[model_eval] = mae_test_std
                     best_mean_mse[model_eval] = mse_test_mean
                     best_std_mse[model_eval] = mse_test_std
+                    save_npy = True
                 # print('Evaluate %d random %s, mean = %.4f std = %.4f\n-------------------------'%(len(accs_test), model_eval, acc_test_mean, acc_test_std))
                 wandb.log({'MAE/{}'.format(model_eval): mae_test_mean}, step=it)
                 wandb.log({'best MAE/{}'.format(model_eval): best_mean_mae[model_eval]}, step=it)
@@ -163,7 +164,19 @@ def main(args):
                 wandb.log({'Std/{}'.format(model_eval): mse_test_std}, step=it)
                 wandb.log({'best Std/{}'.format(model_eval): best_std_mse[model_eval]}, step=it)
 
+        if it in eval_it_pool and (save_npy or it % 1000 == 0):
+            with torch.no_grad():
+                data_save = TensorDataset(x_sys, y_sys).cuda()
 
+                save_dir = os.path.join(".", "logged_files", args.dataset, wandb.run.name)
+
+                if not os.path.exists(save_dir):
+                    os.makedirs(save_dir)
+
+                torch.save(data_save.cpu(), os.path.join(save_dir, "dataset_{}.npy".format(it)))
+
+                if save_npy:
+                    torch.save(data_save.cpu(), os.path.join(save_dir, "dataset_best.npy".format(it)))
 
         wandb.log({"Synthetic_LR": syn_lr.detach().cpu()}, step=it)
 
