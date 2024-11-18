@@ -7,13 +7,12 @@ from process.data_factory import get_data
 from process.exp import model_train, model_test
 from network_patch import TSFE_Model
 import warnings
-
+os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 def main(args):
-    args.dsa = True if args.dsa == 'True' else False
-    args.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     # print('\n================== Exp %d ==================\n '%exp)
     print('Hyper-parameters: \n', args.__dict__)
@@ -76,12 +75,8 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Parameter Processing')
-    parser.add_argument('--num_experts', type=int, default=50, help='training iterations')
+    parser.add_argument('--num_experts', type=int, default=100, help='training iterations')
     parser.add_argument('--lr_teacher', type=float, default=0.01, help='learning rate for updating network parameters')
-    parser.add_argument('--dsa', type=str, default='True', choices=['True', 'False'],
-                        help='whether to use differentiable Siamese augmentation.')
-    parser.add_argument('--dsa_strategy', type=str, default='color_crop_cutout_flip_scale_rotate',
-                        help='differentiable Siamese augmentation strategy')
     parser.add_argument('--buffer_path', type=str, default='./buffers', help='buffer path')
     # parser.add_argument('--train_epochs', type=int, default=50)
     parser.add_argument('--decay', action='store_true')
@@ -99,9 +94,9 @@ if __name__ == '__main__':
 
     # data loader
     parser.add_argument('--data', type=str, default='custom', help='dataset type')
-    parser.add_argument('--data_name', type=str, default='traffic')
+    parser.add_argument('--data_name', type=str, default='weather')
     parser.add_argument('--root_path', type=str, default='./dataset/', help='root path of the data file')
-    parser.add_argument('--data_path', type=str, default='traffic.csv', help='data file')
+    parser.add_argument('--data_path', type=str, default='weather.csv', help='data file')
     parser.add_argument('--features', type=str, default='M',
                         help='forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, S:univariate predict univariate, MS:multivariate predict univariate')
     parser.add_argument('--target', type=str, default='OT', help='target feature in S or MS task')
@@ -112,7 +107,7 @@ if __name__ == '__main__':
     # forecasting task
     parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
     parser.add_argument('--label_len', type=int, default=48, help='start token length')
-    parser.add_argument('--pred_len', type=int, default=96, help='prediction sequence length')
+    parser.add_argument('--pred_len', type=int, default=336, help='prediction sequence length')
 
     # DLinear
     # parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
@@ -133,15 +128,15 @@ if __name__ == '__main__':
     # Formers
     parser.add_argument('--embed_type', type=int, default=0,
                         help='0: default 1: value embedding + temporal embedding + positional embedding 2: value embedding + temporal embedding 3: value embedding + positional embedding 4: value embedding')
-    parser.add_argument('--enc_in', type=int, default=7,
+    parser.add_argument('--enc_in', type=int, default=21,
                         help='encoder input size')  # DLinear with --individual, use this hyperparameter as the number of channels
     parser.add_argument('--dec_in', type=int, default=7, help='decoder input size')
     parser.add_argument('--c_out', type=int, default=7, help='output size')
-    parser.add_argument('--d_model', type=int, default=512, help='dimension of layers')
-    parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
-    parser.add_argument('--e_layers', type=int, default=2, help='num of encoder layers')
+    parser.add_argument('--d_model', type=int, default=128, help='dimension of layers')
+    parser.add_argument('--n_heads', type=int, default=16, help='num of heads')
+    parser.add_argument('--e_layers', type=int, default=3, help='num of encoder layers')
     parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
-    parser.add_argument('--d_ff', type=int, default=2048, help='dimension of fcn')
+    parser.add_argument('--d_ff', type=int, default=256, help='dimension of fcn')
     parser.add_argument('--moving_avg', type=int, default=25, help='window size of moving average')
     parser.add_argument('--factor', type=int, default=1, help='attn factor')
     parser.add_argument('--distil', action='store_false',
@@ -171,7 +166,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_gpu', type=bool, default=True, help='use gpu')
     parser.add_argument('--gpu', type=int, default=0, help='gpu')
     parser.add_argument('--use_multi_gpu', action='store_true', help='use multiple gpus', default=False)
-    parser.add_argument('--devices', type=str, default='cuda', help='device ids of multile gpus')
+    parser.add_argument('--devices', type=str, default='cuda:0', help='device ids of multile gpus')
     parser.add_argument('--test_flop', action='store_true', default=False, help='See process/tools for usage')
 
     args = parser.parse_args()
