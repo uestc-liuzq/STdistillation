@@ -1,7 +1,11 @@
 import numpy as np
+import random
 import torch
+from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+from process.data_factory import get_data
 import time
+
 
 plt.switch_backend('agg')
 
@@ -55,7 +59,6 @@ class EarlyStopping:
             self.save_checkpoint(val_loss, model, path)
         elif score < self.best_score + self.delta:
             self.counter += 1
-            print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
@@ -64,8 +67,6 @@ class EarlyStopping:
             self.counter = 0
 
     def save_checkpoint(self, val_loss, model, path):
-        if self.verbose:
-            print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving layers ...')
         torch.save(model.state_dict(), path + '/' + 'checkpoint.pth')
         self.val_loss_min = val_loss
 
@@ -116,4 +117,34 @@ def test_params_flop(model,x_shape):
         print('{:<30}  {:<8}'.format('Computational complexity: ', macs))
         print('{:<30}  {:<8}'.format('Number of parameters: ', params))
 
+
+def add_noise(tensor, noise_level):
+    noise = np.random.normal(scale=noise_level, size=tensor.shape)
+    noisy_tensor = tensor + noise
+    return noisy_tensor
+
+
+def get_ts_dataset(args,train_data):
+    train_loader = DataLoader(
+        train_data,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.num_workers,
+        drop_last=True,
+        pin_memory=True)
+    N = 500
+    x = []
+    y = []
+    for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
+        x.append(batch_x)
+        y.append(batch_y)
+    x = torch.cat(x,dim=0)
+    index_x = torch.LongTensor(random.sample(range(x.size(0)),N))
+    x_sys = torch.index_select(x,0,index_x)
+    x_sys = add_noise(x_sys,0.0001)
+    y = torch.cat(y,dim=0)
+    index_y = torch.LongTensor(random.sample(range(y.size(0)), N))
+    y_sys = torch.index_select(y, 0, index_y)
+    y_sys = add_noise(y_sys, 0.0001)
+    return x_sys, y_sys
 
