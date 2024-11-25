@@ -20,8 +20,6 @@ def model_train(args, model, model_optim, criterion, train_loader, epochs):
                                         max_lr=args.learning_rate)
     if args.use_amp:
         scaler = torch.cuda.amp.GradScaler()
-    early_stopping = EarlyStopping(patience=args.patience, verbose=True)
-    epochs = epochs//200
     for ep in range(epochs+1):
         train_loss = []
         model.train()
