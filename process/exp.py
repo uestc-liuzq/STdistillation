@@ -20,40 +20,39 @@ def model_train(args, model, model_optim, criterion, train_loader, epochs):
                                         max_lr=args.learning_rate)
     if args.use_amp:
         scaler = torch.cuda.amp.GradScaler()
-    for ep in range(epochs+1):
         train_loss = []
         model.train()
-        for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
-            model_optim.zero_grad()
-            batch_x = batch_x.float().to(args.device)
+    for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
+        model_optim.zero_grad()
 
-            batch_y = batch_y.float().to(args.device)
-            if args.use_amp:
-                with torch.cuda.amp.autocast():
-                    outputs, res, trend = model(batch_x)
-            else:
+        batch_x = batch_x.float().to(args.device)
+        batch_y = batch_y.float().to(args.device)
+        if args.use_amp:
+            with torch.cuda.amp.autocast():
                 outputs, res, trend = model(batch_x)
-            f_dim = -1 if args.features == 'MS' else 0
-            outputs = outputs[:, -args.pred_len:, f_dim:]
-            batch_y = batch_y[:, -args.pred_len:, f_dim:].to(args.device)
-            loss = criterion(outputs, batch_y)
-            # a = res.cpu().detach().numpy()
-            # b = trend.cpu().detach().numpy()
-            # cos_sim = cosine_similarity(a.reshape(1, -1), b.reshape(1, -1))
-            # print('cos_sim:', cos_sim)
-            train_loss.append(loss.item())
+        else:
+            outputs, res, trend = model(batch_x)
+        f_dim = -1 if args.features == 'MS' else 0
+        outputs = outputs[:, -args.pred_len:, f_dim:]
+        batch_y = batch_y[:, -args.pred_len:, f_dim:].to(args.device)
+        loss = criterion(outputs, batch_y)
+        # a = res.cpu().detach().numpy()
+        # b = trend.cpu().detach().numpy()
+        # cos_sim = cosine_similarity(a.reshape(1, -1), b.reshape(1, -1))
+        # print('cos_sim:', cos_sim)
+        train_loss.append(loss.item())
 
-            if args.use_amp:
-                scaler.scale(loss).backward()
-                scaler.step(model_optim)
-                scaler.update()
-            else:
-                loss.backward()
-                model_optim.step()
+        if args.use_amp:
+            scaler.scale(loss).backward()
+            scaler.step(model_optim)
+            scaler.update()
+        else:
+            loss.backward()
+            model_optim.step()
 
-            if args.lradj == 'TST':
-                adjust_learning_rate(model_optim, scheduler, ep+1, args, printout=False)
-                scheduler.step()
+        if args.lradj == 'TST':
+            adjust_learning_rate(model_optim, scheduler, epochs+1, args, printout=False)
+            scheduler.step()
 
         train_loss = np.average(train_loss)
     return train_loss
