@@ -35,8 +35,7 @@ def main(args):
         teacher_net = teacher_net.cuda()
         teacher_net.train()
         lr = args.lr_teacher
-        teacher_optim = torch.optim.SGD(teacher_net.parameters(), lr=lr, momentum=args.mom,
-                                        weight_decay=args.l2)  # optimizer_img for synthetic ECG200
+        teacher_optim = torch.optim.Adam(teacher_net.parameters(), lr=lr)
         teacher_optim.zero_grad()
 
         timestamps = []
@@ -47,7 +46,7 @@ def main(args):
 
         for e in range(train_epochs):
             train_loss = model_train(args, teacher_net, teacher_optim, criterion, train_loader,e)
-            mae, mse, rmse = model_test(args, teacher_net, teacher_optim, criterion, test_loader)
+            _, mae, mse, rmse = model_test(args, teacher_net, teacher_optim, criterion, test_loader)
 
             print("Itr: {}\tEpoch: {}\tTrain Loss: {}\nTest mae: {}\tTest mse: {}\tTest rmse: {}\t".format(it, e,
                                                                                                            train_loss,
@@ -56,11 +55,11 @@ def main(args):
 
             timestamps.append([p.detach().cpu() for p in teacher_net.parameters()])
 
-            if e in lr_schedule and args.decay:
-                lr *= 0.1
-                teacher_optim = torch.optim.SGD(teacher_net.parameters(), lr=lr, momentum=args.mom,
-                                                weight_decay=args.l2)
-                teacher_optim.zero_grad()
+            # if e in lr_schedule and args.decay:
+            #     lr *= 0.1
+            #     teacher_optim = torch.optim.SGD(teacher_net.parameters(), lr=lr, momentum=args.mom,
+            #                                     weight_decay=args.l2)
+            #     teacher_optim.zero_grad()
 
         trajectories.append(timestamps)
 
@@ -75,14 +74,13 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Parameter Processing')
-    parser.add_argument('--num_experts', type=int, default=100, help='training iterations')
-    parser.add_argument('--lr_teacher', type=float, default=0.01, help='learning rate for updating network parameters')
+    parser.add_argument('--num_experts', type=int, default=20, help='training iterations')
+    parser.add_argument('--lr_teacher', type=float, default=0.0001, help='learning rate for updating network parameters')
     parser.add_argument('--buffer_path', type=str, default='./buffers', help='buffer path')
-    # parser.add_argument('--train_epochs', type=int, default=50)
     parser.add_argument('--decay', action='store_true')
     parser.add_argument('--mom', type=float, default=0, help='momentum')
     parser.add_argument('--l2', type=float, default=0, help='l2 regularization')
-    parser.add_argument('--save_interval', type=int, default=10)
+    parser.add_argument('--save_interval', type=int, default=2)
 
     parser.add_argument('--random_seed', type=int, default=2021, help='random seed')
 

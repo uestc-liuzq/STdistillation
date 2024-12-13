@@ -1,5 +1,8 @@
 import os
 import argparse
+import random
+import wandb
+import copy
 import numpy as np
 import torch
 import torch.nn as nn
@@ -7,16 +10,16 @@ import torch.nn.functional as F
 import torchvision.utils
 from tqdm import tqdm
 from network_patch import TSFE_Model
+from process.exp import evaluate_synset, TensorDataset, train_synset
 from process.data_factory import get_data
-from process.exp import evaluate_synset, TensorDataset
-from utils import get_dataset, get_network, get_eval_pool, get_time, DiffAugment, ParamDiffAug, add_noise
-import wandb
-import copy
-import random
+from process.tools import get_ts_dataset
+from utils import get_time
 from reparam_module import ReparamModule
 
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 
 def main(args):
     if args.max_experts is not None and args.max_files is not None:
@@ -29,7 +32,7 @@ def main(args):
     # model_eval_pool = get_eval_pool(args.eval_mode, args.model, args.model)
     model_eval_pool = ['TSFE']
 
-    accs_all_exps = dict() # record performances of all experiments
+    accs_all_exps = dict()  # record performances of all experiments
     for key in model_eval_pool:
         accs_all_exps[key] = []
 
@@ -48,38 +51,25 @@ def main(args):
 
     args.distributed = torch.cuda.device_count() > 1
 
-
     print('Hyper-parameters: \n', args.__dict__)
     print('Evaluation layers pool: ', model_eval_pool)
 
     ''' organize the real dataset '''
-    train_data, train_loader = get_data(args, flag='train')
-    print(len(train_loader))
+    train_data, train_loader= get_data(args, flag='train')
+    vail_data, vail_loader = get_data(args, flag='val')
     test_data, test_loader = get_data(args, flag='test')
-    N = 500
-    x = []
-    y = []
-    for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
-        x.append(batch_x)
-        y.append(batch_y)
-    x = torch.cat(x,dim=0)
-    index_x = torch.LongTensor(random.sample(range(x.size(0)),N))
-    x_sys = torch.index_select(x,0,index_x)
-    x_sys = add_noise(x_sys,0.001)
-    y = torch.cat(y,dim=0)
-    index_y = torch.LongTensor(random.sample(range(y.size(0)), N))
-    y_sys = torch.index_select(y, 0, index_y)
-    y_sys = add_noise(y_sys, 0.001)
-    del x,y,index_x,index_y
+    x_sys, y_sys = get_ts_dataset(args, train_data)
     syn_lr = torch.tensor(args.lr_teacher).to(args.device)
     ''' training '''
+    net_eval = TSFE_Model(args).to(args.device)
     syn_lr = syn_lr.detach().to(args.device).requires_grad_(True)
     optimizer_ts = torch.optim.SGD([x_sys], lr=args.lr_ts, momentum=0.5)
-    optimizer_lr = torch.optim.SGD([syn_lr], lr=args.lr_lr, momentum=0.5)
+    optimizer_lr = torch.optim.SGD([syn_lr], lr=args.lr_ts, momentum=0.5)
     optimizer_ts.zero_grad()
+    args.save_path = 'save_models/{}_{}_{}'.format(args.layers, args.data_name, args.pred_len)
 
     criterion = nn.MSELoss().to(args.device)
-    print('%s training begins'%get_time())
+    print('%s training begins' % get_time())
 
     expert_dir = os.path.join(args.buffer_path, args.data_name + '_' + str(args.pred_len))
     expert_dir = os.path.join(expert_dir, args.layers)
@@ -91,7 +81,6 @@ def main(args):
         while os.path.exists(os.path.join(expert_dir, "replay_buffer_{}.pt".format(n))):
             buffer = buffer + torch.load(os.path.join(expert_dir, "replay_buffer_{}.pt".format(n)))
             n += 1
-            print(n)
         if n == 0:
             raise AssertionError("No buffers detected at {}".format(expert_dir))
 
@@ -114,72 +103,53 @@ def main(args):
             buffer = buffer[:args.max_experts]
         random.shuffle(buffer)
 
-    best_mean_mae = {m: 0 for m in model_eval_pool}
+    best_mean_mae = {m: 10 for m in model_eval_pool}
 
-    best_std_mae = {m: 0 for m in model_eval_pool}
+    best_mean_mse = {m: 10 for m in model_eval_pool}
 
-    best_mean_mse = {m: 0 for m in model_eval_pool}
-
-    best_std_mse = {m: 0 for m in model_eval_pool}
-
-    for it in range(0, args.Iteration+1):
+    for it in range(0, args.Iteration + 1):
         save_npy = False
-        # writer.add_scalar('Progress', it, it)
         wandb.log({"Progress": it}, step=it)
         ''' Evaluate synthetic '''
         if it in eval_it_pool:
             for model_eval in model_eval_pool:
-                print('-------------------------\nEvaluation\nmodel_train = %s, model_eval = %s, iteration = %d'%(args.layers, model_eval, it))
+                print('-----------------------\nEvaluation\nmodel_train = %s, model_eval = %s, iteration = %d' % (
+                args.layers, model_eval, it))
                 MAE = []
                 MSE = []
-
-                net_eval = TSFE_Model(args).to(args.device) # get a random layers
-                args.lr_net = syn_lr.item()
                 batch_y = y_sys
                 with torch.no_grad():
                     batch_x = x_sys
                 x_syn_eval, y_syn_eval = copy.deepcopy(batch_x.detach()), copy.deepcopy(batch_y.detach())
-                _,_,mae,mse,rmse = evaluate_synset(net_eval, x_syn_eval,y_syn_eval, test_loader, args)
+                net_eval, acc_train_list, mae, mse = evaluate_synset(net_eval, x_syn_eval, y_syn_eval, train_loader,vail_loader, test_loader, args)
                 MAE.append(mae)
                 MSE.append(mse)
                 MAE = np.array(MAE)
                 MSE = np.array(MSE)
                 mae_test_mean = np.mean(MAE)
-                mae_test_std = np.std(MAE)
                 mse_test_mean = np.mean(MSE)
-                mse_test_std = np.std(MSE)
                 if mae_test_mean < best_mean_mae[model_eval]:
                     best_mean_mae[model_eval] = mae_test_mean
-                    best_std_mae[model_eval] = mae_test_std
                     best_mean_mse[model_eval] = mse_test_mean
-                    best_std_mse[model_eval] = mse_test_std
                     save_npy = True
-                # print('Evaluate %d random %s, mean = %.4f std = %.4f\n-------------------------'%(len(accs_test), model_eval, acc_test_mean, acc_test_std))
                 wandb.log({'MAE/{}'.format(model_eval): mae_test_mean}, step=it)
                 wandb.log({'best MAE/{}'.format(model_eval): best_mean_mae[model_eval]}, step=it)
-                wandb.log({'Std/{}'.format(model_eval): mae_test_std}, step=it)
-                wandb.log({'best Std/{}'.format(model_eval): best_std_mae[model_eval]}, step=it)
                 wandb.log({'MSE/{}'.format(model_eval): mse_test_mean}, step=it)
                 wandb.log({'best MSE/{}'.format(model_eval): best_mean_mse[model_eval]}, step=it)
-                wandb.log({'Std/{}'.format(model_eval): mse_test_std}, step=it)
-                wandb.log({'best Std/{}'.format(model_eval): best_std_mse[model_eval]}, step=it)
 
-        if it in eval_it_pool and (save_npy or it % 1000 == 0):
-            with torch.no_grad():
-                data_save = TensorDataset(x_sys, y_sys).cuda()
-
-                save_dir = os.path.join(".", "logged_files", args.dataset, wandb.run.name)
-
-                if not os.path.exists(save_dir):
-                    os.makedirs(save_dir)
-
-                torch.save(data_save.cpu(), os.path.join(save_dir, "dataset_{}.npy".format(it)))
-
-                if save_npy:
-                    torch.save(data_save.cpu(), os.path.join(save_dir, "dataset_best.npy".format(it)))
-
-        wandb.log({"Synthetic_LR": syn_lr.detach().cpu()}, step=it)
-
+        # if it in eval_it_pool and (save_npy or it % 1000 == 0):
+        #     with torch.no_grad():
+        #         data_save = TensorDataset(x_sys, y_sys)
+        #
+        #         save_dir = os.path.join(".", "dataset_files", args.dataset)
+        #
+        #         if not os.path.exists(save_dir):
+        #             os.makedirs(save_dir)
+        #
+        #         torch.save(data_save.cpu(), os.path.join(save_dir, "dataset_{}.npy".format(it)))
+        #
+        #         if save_npy:
+        #             torch.save(data_save.cpu(), os.path.join(save_dir, "dataset_best.npy".format(it)))
         student_net = TSFE_Model(args).to(args.device)  # get a random layers
 
         student_net = ReparamModule(student_net)
@@ -213,25 +183,29 @@ def main(args):
         start_epoch = np.random.randint(0, args.max_start_epoch)
         starting_params = expert_trajectory[start_epoch]
 
-        target_params = expert_trajectory[start_epoch+args.expert_epochs]
+        target_params = expert_trajectory[start_epoch + it//50]
+        for param, target_param in zip(target_params, net_eval.parameters()):
+            target_param.data.copy_(torch.tensor(param).to(target_param.device))
+
         target_params = torch.cat([p.data.to(args.device).reshape(-1) for p in target_params], 0)
 
-        student_params = [torch.cat([p.data.to(args.device).reshape(-1) for p in starting_params], 0).requires_grad_(True)]
+        student_params = [
+            torch.cat([p.data.to(args.device).reshape(-1) for p in starting_params], 0).requires_grad_(True)]
 
         starting_params = torch.cat([p.data.to(args.device).reshape(-1) for p in starting_params], 0)
-
-
         param_loss_list = []
         param_dist_list = []
-        indices_chunks = []
         K = 100
         index_x = torch.LongTensor(random.sample(range(x_sys.size(0)), K))
         x_syn_train = torch.index_select(x_sys, 0, index_x)
         index_y = torch.LongTensor(random.sample(range(y_sys.size(0)), K))
         y_syn_train = torch.index_select(y_sys, 0, index_y)
-        train_loader = TensorDataset(x_syn_train, y_syn_train)
-        train_loader = torch.utils.data.DataLoader(train_loader, batch_size=2, shuffle=True, num_workers=0)
-        for step, batch in enumerate(train_loader):
+        x_sys, y_sys = get_ts_dataset(args, train_data)
+        sys_loader = TensorDataset(x_syn_train, y_syn_train)
+        sys_loader = torch.utils.data.DataLoader(sys_loader, batch_size=16, shuffle=True, num_workers=0)
+        # if it in eval_it_pool: net_eval,_ = train_synset(args, net_eval, optimizer_ts, criterion, train_loader, test_loader, it)
+
+        for step, batch in enumerate(sys_loader):
             x = batch[0].float().to(args.device)
             this_y = batch[1].float().to(args.device)
 
@@ -239,7 +213,7 @@ def main(args):
             #     forward_params = student_params[-1].unsqueeze(0).expand(torch.cuda.device_count(), -1)
             # else:
             forward_params = student_params[-1]
-            x, res, trend= student_net(x, flat_param=forward_params)
+            x, res, trend = student_net(x, flat_param=forward_params)
             f_dim = -1 if args.features == 'MS' else 0
             x = x[:, -args.pred_len:, f_dim:]
             this_y = this_y[:, -args.pred_len:, f_dim:].to(args.device)
@@ -249,7 +223,6 @@ def main(args):
 
             student_params.append(student_params[-1] - syn_lr * grad)
 
-
         param_loss = torch.tensor(0.0).to(args.device)
         param_dist = torch.tensor(0.0).to(args.device)
 
@@ -258,7 +231,6 @@ def main(args):
 
         param_loss_list.append(param_loss)
         param_dist_list.append(param_dist)
-
 
         param_loss /= num_params
         param_dist /= num_params
@@ -274,10 +246,6 @@ def main(args):
 
         optimizer_ts.step()
         optimizer_lr.step()
-
-        wandb.log({"Grand_Loss": grand_loss.detach().cpu(),
-                   "Start_Epoch": start_epoch})
-
         for _ in student_params:
             del _
 
@@ -288,36 +256,30 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Parameter Processing')
     parser.add_argument('--eval_it', type=int, default=100, help='how often to evaluate')
 
-    parser.add_argument('--epoch_eval_train', type=int, default=50, help='epochs to train a layers with synthetic ECG200')
+    parser.add_argument('--epoch_eval_train', type=int, default=50,
+                        help='epochs to train a layers with synthetic datasets')
     parser.add_argument('--Iteration', type=int, default=1000, help='how many distillation steps to perform')
 
-    parser.add_argument('--lr_ts', type=float, default=0.001, help='learning rate for updating synthetic data')
-    parser.add_argument('--lr_lr', type=float, default=1e-05, help='learning rate for updating... learning rate')
-    parser.add_argument('--lr_teacher', type=float, default=0.0001, help='initialization for synthetic learning rate')
-
-    parser.add_argument('--lr_init', type=float, default=0.0001, help='how to init lr (alpha)')
-
-    parser.add_argument('--batch_real', type=int, default=128, help='batch size for real ECG200')
-    parser.add_argument('--batch_syn', type=int, default=int, help='should only use this if you run out of VRAM')
-    parser.add_argument('--batch_train', type=int, default=128, help='batch size for training networks')
-
+    parser.add_argument('--lr_ts', type=float, default=0.0001, help='learning rate for updating synthetic data')
+    parser.add_argument('--lr_teacher', type=float, default=0.001, help='initialization for synthetic learning rate')
     parser.add_argument('--buffer_path', type=str, default='./buffers', help='buffer path')
 
     parser.add_argument('--expert_epochs', type=int, default=3, help='how many expert epochs the target params are')
-    parser.add_argument('--syn_steps', type=int, default=20, help='how many steps to take on synthetic ECG200')
+    parser.add_argument('--syn_steps', type=int, default=20, help='how many steps to take on synthetic data')
     parser.add_argument('--max_start_epoch', type=int, default=25, help='max epoch we can start at')
 
-    parser.add_argument('--load_all', default=False, action='store_true', help="only use if you can fit all expert trajectories into RAM")
+    parser.add_argument('--load_all', default=False, action='store_true',
+                        help="only use if you can fit all expert trajectories into RAM")
 
     parser.add_argument('--no_aug', type=bool, default=False, help='this turns off diff aug during distillation')
 
     parser.add_argument('--texture', action='store_true', help="will distill textures instead")
-    parser.add_argument('--canvas_size', type=int, default=2, help='size of synthetic canvas')
-    parser.add_argument('--canvas_samples', type=int, default=1, help='number of canvas samples per iteration')
+    parser.add_argument('--epochs', type=int, default=1, help="how many epochs on real data")
 
-
-    parser.add_argument('--max_files', type=int, default=5, help='number of expert files to read (leave as None unless doing ablations)')
-    parser.add_argument('--max_experts', type=int, default=None, help='number of experts to read per file (leave as None unless doing ablations)')
+    parser.add_argument('--max_files', type=int, default=5,
+                        help='number of expert files to read (leave as None unless doing ablations)')
+    parser.add_argument('--max_experts', type=int, default=None,
+                        help='number of experts to read per file (leave as None unless doing ablations)')
 
     parser.add_argument('--force_save', action='store_true', help='this will save images for 50ipc')
 
@@ -330,10 +292,10 @@ if __name__ == '__main__':
                         help='layers name, options: [Autoformer, Informer, Transformer]')
 
     # data loader
-    parser.add_argument('--data', type=str, default='custom', help='dataset type')
-    parser.add_argument('--data_name', type=str, default='traffic')
+    parser.add_argument('--data', type=str, default='ETTh1', help='dataset type')
+    parser.add_argument('--data_name', type=str, default='ETTh1')
     parser.add_argument('--root_path', type=str, default='./dataset/', help='root path of the data file')
-    parser.add_argument('--data_path', type=str, default='traffic.csv', help='data file')
+    parser.add_argument('--data_path', type=str, default='ETTh1.csv', help='data file')
     parser.add_argument('--features', type=str, default='M',
                         help='forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, S:univariate predict univariate, MS:multivariate predict univariate')
     parser.add_argument('--target', type=str, default='OT', help='target feature in S or MS task')
@@ -344,7 +306,7 @@ if __name__ == '__main__':
     # forecasting task
     parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
     parser.add_argument('--label_len', type=int, default=48, help='start token length')
-    parser.add_argument('--pred_len', type=int, default=336, help='prediction sequence length')
+    parser.add_argument('--pred_len', type=int, default=96, help='prediction sequence length')
 
     # DLinear
     # parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
@@ -380,7 +342,8 @@ if __name__ == '__main__':
                         help='whether to use distilling in encoder, using this argument means not using distilling',
                         default=True)
     parser.add_argument('--dropout', type=float, default=0.05, help='dropout')
-    parser.add_argument('--embed', type=str, default='timeF', help='time features encoding, options:[timeF, fixed, learned]')
+    parser.add_argument('--embed', type=str, default='timeF',
+                        help='time features encoding, options:[timeF, fixed, learned]')
     parser.add_argument('--activation', type=str, default='gelu', help='activation')
     parser.add_argument('--output_attention', action='store_true', help='whether to output attention in ecoder')
     parser.add_argument('--do_predict', action='store_true', help='whether to predict unseen future data')
@@ -402,7 +365,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_gpu', type=bool, default=True, help='use gpu')
     parser.add_argument('--gpu', type=int, default=0, help='gpu')
     parser.add_argument('--use_multi_gpu', action='store_true', help='use multiple gpus', default=False)
-    parser.add_argument('--devices', type=str, default='cuda', help='device ids of multile gpus')
+    parser.add_argument('--devices', type=str, default='cuda:0', help='device ids of multile gpus')
     parser.add_argument('--test_flop', action='store_true', default=False, help='See process/tools for usage')
 
     args = parser.parse_args()
