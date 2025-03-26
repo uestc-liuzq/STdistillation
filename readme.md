@@ -1,6 +1,20 @@
-# Less is More: Efficient Time Series Dataset Condensation via Two-fold Modal Matching
+# Less is More: Efficient Time Series Dataset Condensation via Two-fold Modal Matching (PVLDB 2025)
 
 <img src="framework.png" width="90%" height="80%">
+
+### Citation
+Please cite the following paper if this paper/repository is useful for your research.
+```
+@article{miao2024less,
+  title={Less is more: Efficient time series dataset condensation via two-fold modal matching},
+  author={Miao, Hao and Liu, Ziqiao and Zhao, Yan and Guo, Chenjuan and Yang, Bin and Zheng, Kai and Jensen, Christian S},
+  journal={PVLDB},
+  volume={18},
+  number={2},
+  pages={226--238},
+  year={2024}
+}
+```
 
 ## Running
 - **Data Preparation:** _Weather_, _Traffic_, _Electricity_ and _ETT_ can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1ZOYpTUa82_jCcxIdTmyr0LXQfvaM9vIy).
